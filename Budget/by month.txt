@@ -1,0 +1,1681 @@
+<?PHP 
+session_start();
+include("insertLog.php");
+include("cfg.php");
+include("functions_ps_mmo.php");
+include("checker_duplications.php");
+include("Classes/PHPExcel.php");
+
+date_default_timezone_set('Asia/Manila');
+
+if($_SESSION['isLogin'] == 0) {
+	
+	header("location: index.php");
+}
+
+?>
+
+
+
+
+<?PHP
+
+
+if($_SERVER["REQUEST_METHOD"]=="POST"){
+
+$post_alobs = date("m",strtotime($_POST['date']))."-".sprintf("%03d",$_POST['alobs'])."-".substr(date("Y",strtotime($_POST['date'])),-2);
+
+//Check Duplication
+
+if (($checksb = check_if_duplicate_sb($post_alobs))=="1"){
+	
+	echo "Error! Duplicate found: Sangguniang Bayan";
+	unset($_POST);
+}
+
+	else if (($checkmpdo = check_if_duplicate_mpdo($post_alobs))=="1"){
+		
+		echo "Error! Duplicate found: MPDO";
+		unset($_POST);
+	}
+
+		else if (($checklcr = check_if_duplicate_lcr($post_alobs))=="1"){
+		
+		echo "Error! Duplicate found: LCR";
+		unset($_POST);
+		}
+		
+			else if (($checkmbo = check_if_duplicate_mbo($post_alobs))=="1"){
+		
+			echo "Error! Duplicate found: MBO";
+			unset($_POST);
+			}
+			
+				else if (($checkmacco = check_if_duplicate_macco($post_alobs))=="1"){
+		
+				echo "Error! Duplicate found: MACCO";
+				unset($_POST);
+				}
+				
+					else if (($checkmto = check_if_duplicate_mto($post_alobs))=="1"){
+		
+					echo "Error! Duplicate found: MTO";
+					unset($_POST);
+					}
+					
+						else if (($checkmasso = check_if_duplicate_masso($post_alobs))=="1"){
+		
+						echo "Error! Duplicate found: MASSO";
+						unset($_POST);
+						}
+						
+							else if (($checkmho = check_if_duplicate_mho($post_alobs))=="1"){
+		
+							echo "Error! Duplicate found: MHO";
+							unset($_POST);
+							}
+						
+								else if (($checkmswd = check_if_duplicate_mswd($post_alobs))=="1"){
+		
+								echo "Error! Duplicate found: MSWD";
+								unset($_POST);
+								}
+									else if (($checkmao = check_if_duplicate_mao($post_alobs))=="1"){
+		
+										echo "Error! Duplicate found: MAO";
+										unset($_POST);
+									}
+									
+										else if (($checkmeo = check_if_duplicate_meo($post_alobs))=="1"){
+		
+											echo "Error! Duplicate found: MEO";
+											unset($_POST);
+											}
+
+												else if (($checkmbe = check_if_duplicate_mbe($post_alobs))=="1"){
+		
+												echo "Error! Duplicate found: Market";
+												unset($_POST);
+												}
+												
+													else if (($checkgs = check_if_duplicate_gs($post_alobs))=="1"){
+		
+													echo "Error! Duplicate found: Plaza";
+													unset($_POST);
+													}
+													
+													else {
+
+
+
+//date
+$get_date_Y = date("Y",strtotime($_POST['date']));
+$get_date_m = date("m",strtotime($_POST['date']));
+$get_date_d = date("d",strtotime($_POST['date']));
+	
+//ALOBS
+
+
+$post_claimant = htmlentities($_POST['claimant'], ENT_QUOTES);
+	
+//numbers	
+$post_salary =$_POST['salaries'];
+$post_pera = $_POST['pera'];
+$post_ra = $_POST['ra'];	
+$post_ta = $_POST['ta'];
+$post_cloth = $_POST['cloth'];
+$post_hon = $_POST['honoraria'];	
+$post_yend = $_POST['year_end'];	
+$post_gft = $_POST['cash_gift'];	
+$post_mid = $_POST['mid_year'];	
+$post_pib = $_POST['pib'];
+$post_gsis = $_POST['gsis'];
+$post_hdmf = $_POST['hdmf'];
+$post_care = $_POST['care'];
+$post_ecc = $_POST['ecc'];
+$post_tlb = $_POST['tlb'];
+$post_others = $_POST['others'];
+	
+$totalObligation = $post_salary + $post_pera +$post_ra+ $post_ta + $post_cloth + $post_hon + $post_yend + $post_gft + $post_mid + $post_pib + $post_gsis + $post_hdmf + $post_care + $post_ecc + $post_others + $post_tlb;
+
+$query = "INSERT INTO psmmo (
+year_transact, 
+month_transact, 
+day_transact, 
+alobs, 
+claimant, 
+salaries, 
+PERA, 
+RA, 
+TA, 
+clothing_allowance, 
+honoraria,
+year_end_bonus, 
+cash_gift, 
+mid_year_bonus,
+pib, 
+life_retirement,
+pag_ibig, 
+philhealth, 
+ecc, 
+other_personel_benefits, 
+terminal_benefits, 
+total) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+
+$result = $db->prepare($query);
+$result->execute([
+	$get_date_Y, 
+	$get_date_m, 
+	$get_date_d, 
+	$post_alobs, 
+	$post_claimant, 
+	$post_salary,
+	$post_pera,
+	$post_ra,
+	$post_ta,
+	$post_cloth,
+	$post_hon,
+	$post_yend,
+	$post_gft,
+	$post_mid,
+	$post_pib,
+	$post_gsis,
+	$post_hdmf,
+	$post_care,
+	$post_ecc,
+	$post_others, 
+	$post_tlb,
+	$totalObligation]);  
+	
+	
+   
+
+	$cnt = $result->rowCount();
+
+	if($cnt == "1") {
+		
+		unset($_POST);
+		header('Location: '.$_SERVER['PHP_SELF']);
+		
+	}
+	
+	
+}
+
+}
+
+
+?>
+
+<?PHP
+/* JANUARY TOTAL Obligation */
+$result = $db->prepare("SELECT SUM(total) AS total FROM psmmo WHERE year_transact = ? AND month_transact = ?");
+$result->execute([$_SESSION['budget'], "01"]);
+$row_jan = $result->fetch();
+$ps_jan_total = $row_jan['total'];
+
+/* FEBRUARY TOTAL Obligation */
+
+$result = $db->prepare("SELECT SUM(total) AS total FROM psmmo WHERE year_transact = ? AND month_transact = ?");
+$result->execute([$_SESSION['budget'], "02"]);
+$row_feb = $result->fetch();
+$ps_feb_total = $row_feb['total'];
+
+/* MARCH TOTAL Obligation */
+
+$result = $db->prepare("SELECT SUM(total) AS total FROM psmmo WHERE year_transact = ? AND month_transact = ?");
+$result->execute([$_SESSION['budget'], "03"]);
+$row_march = $result->fetch();
+$ps_march_total = $row_march['total'];
+
+/* APRIL TOTAL Obligation */
+
+$result = $db->prepare("SELECT SUM(total) AS total FROM psmmo WHERE year_transact = ? AND month_transact = ?");
+$result->execute([$_SESSION['budget'], "04"]);
+$row_april = $result->fetch();
+$ps_april_total = $row_april['total'];
+
+/* MAY TOTAL Obligation */
+
+$result = $db->prepare("SELECT SUM(total) AS total FROM psmmo WHERE year_transact = ? AND month_transact = ?");
+$result->execute([$_SESSION['budget'], "05"]);
+$row_may = $result->fetch();
+$ps_may_total = $row_may['total'];
+
+/* JUNE TOTAL Obligation */
+
+$result = $db->prepare("SELECT SUM(total) AS total FROM psmmo WHERE year_transact = ? AND month_transact = ?");
+$result->execute([$_SESSION['budget'], "06"]);
+$row_june = $result->fetch();
+$ps_june_total = $row_june['total'];
+
+/* JULY TOTAL Obligation */
+
+$result = $db->prepare("SELECT SUM(total) AS total FROM psmmo WHERE year_transact = ? AND month_transact = ?");
+$result->execute([$_SESSION['budget'], "07"]);
+$row_july = $result->fetch();
+$ps_july_total = $row_july['total'];
+
+/* AUGUST TOTAL Obligation */
+
+$result = $db->prepare("SELECT SUM(total) AS total FROM psmmo WHERE year_transact = ? AND month_transact = ?");
+$result->execute([$_SESSION['budget'], "08"]);
+$row_august = $result->fetch();
+$ps_august_total = $row_august['total'];
+
+/* SEPTEMBER TOTAL Obligation */
+
+$result = $db->prepare("SELECT SUM(total) AS total FROM psmmo WHERE year_transact = ? AND month_transact = ?");
+$result->execute([$_SESSION['budget'], "09"]);
+$row_september = $result->fetch();
+$ps_september_total = $row_september['total'];
+
+/* OCTOBER TOTAL Obligation */
+
+$result = $db->prepare("SELECT SUM(total) AS total FROM psmmo WHERE year_transact = ? AND month_transact = ?");
+$result->execute([$_SESSION['budget'], "10"]);
+$row_october = $result->fetch();
+$ps_october_total = $row_october['total'];
+
+/* NOVEMBER TOTAL Obligation */
+
+$result = $db->prepare("SELECT SUM(total) AS total FROM psmmo WHERE year_transact = ? AND month_transact = ?");
+$result->execute([$_SESSION['budget'], "11"]);
+$row_november = $result->fetch();
+$ps_november_total = $row_november['total'];
+
+/* DECEMBER TOTAL Obligation */
+
+$result = $db->prepare("SELECT SUM(total) AS total FROM psmmo WHERE year_transact = ? AND month_transact = ?");
+$result->execute([$_SESSION['budget'], "12"]);
+$row_december = $result->fetch();
+$ps_december_total = $row_december['total'];
+
+
+
+?>
+
+
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PS | Mayors Office</title>
+<link rel="shortcut icon" href="favicon.ico"/>
+<link rel="stylesheet" type="text/css" href="ps.css">
+<script src="js/jquery-1.7.2.js" type="text/javascript"></script>
+<script src="js/jquery-1.9.1.min" type="text/javascript"></script>
+<script type = "text/javascript" language = "javascript">
+
+$(document).ready(function() {
+          
+		$("#hide").click(function(){
+        $("#tb1").hide();
+		});
+		$("#show").click(function(){
+        $("#tb1").show();
+    
+});
+    });
+	
+
+</script>
+<script>
+
+
+function openNav() {
+    document.getElementById("mySidenav").style.width = "250px";
+    document.getElementById("main").style.marginLeft = "250px";
+}
+
+function closeNav() {
+    document.getElementById("mySidenav").style.width = "0";
+    document.getElementById("main").style.marginLeft= "0";
+}
+</script>
+</head>
+<body>
+<label id="accountTitle">Personel Services - Mayors Office
+</label>
+<div id="container">
+	<div class="wrap">
+		<ul>
+			<li><a href="personal_services_mmo_all.php" class="active">MMO</a></li>
+			<li><a href="personal_services_sb_all.php">SB</a></li>
+			<li><a href="personal_services_mpdo_all.php">MPDO</a></li>
+			<li><a href="personal_services_lcr_all.php">LCR</a></li>
+			<li><a href="personal_services_mbo_all.php">MBO</a></li>
+			<li><a href="personal_services_macco_all.php">MACCO</a></li>
+			<li><a href="personal_services_mto_all.php">MTO</a></li>
+			<li><a href="personal_services_masso_all.php">MASSO</a></li>
+			<li><a href="personal_services_mho_all.php">MHO</a></li>
+			<li><a href="personal_services_mswd_all.php">MSWD</a></li>
+			<li><a href="personal_services_mao_all.php">MAO</a></li>
+			<li><a href="personal_services_meo_all.php">MEO</a></li>
+			<li><a href="personal_services_mbe_all.php">MARKET</a></li>
+			<li><a href="personal_services_gs_all.php">PLAZA</a></li>
+</ul>
+  </div>
+  
+</div>
+<div id="mySidenav" class="sidenav">
+  <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+  <a href="home.php">Goto Main</a>
+  <a href="aipMMO.php">AIP</a>
+  <a href="export_mmo_ps.php">Export to Excel</a>
+  <a href="mooe_mmo_all.php">Maint. and Other Operating Expenses</a>
+  <a href="co_mmo_all.php">Capital Outlay</a>
+  <a href="delete_ps_mmo.php">Delete ALOBS</a>
+
+ 
+  
+ </div>
+<div id="main">
+<span style="font-size:20px;cursor:pointer" onclick="openNav()">&#9776; Settings</span></div>
+<div id="toggle-wrap">
+<button id="hide">&#9776; Hide</button>
+<button id="show">&#9776; Show</button>
+
+</div>
+<form method ="POST" action="" name="form1" autocomplete="off">
+<div class = "tbl-wrap">
+<table id="tb1">
+	<tr>
+		<td>Date</td>
+		<td>ALOBS</td>
+		<td>Claimant</td>
+	</tr>
+
+	<tr >
+		<td><strong><input type="date" name="date" value="<?PHP echo $_SESSION['budget']."-".date("m-d"); ?>" min="<?PHP echo $_SESSION['budget']."-01-01"; ?>" max="<?PHP echo $_SESSION['budget']."-".date("m-d"); ?>"></strong></td>
+		<td><input type="number" name="alobs" id="alobs" required min="0" step="any" max=999></td>
+		<td><input type="text" id="claimant" name="claimant" placeholder="Juan Dela Cruz et. al." required></td>
+	</tr>
+		<tr>
+			<td>&nbsp;</td>
+		</tr>
+	
+	<tr>
+		<tr>
+		<td>Salaries</td>
+		<td class="textc">01 &nbsp; 01 &nbsp; 010</td>
+		<td><input type="number" step="any" name="salaries"></td>
+	</tr>
+	<tr>
+		<td>PERA</td>
+		<td class="textc">01 &nbsp; 02 &nbsp;	010</td>
+		<td><input type="number" step="any" name="pera"></td>
+	</tr>
+	<tr>
+		<td>RA</td>
+		<td class="textc">01 &nbsp; 02 &nbsp;	020</td>
+		<td><input type="number" step="any" name="ra"></td>
+	</tr>
+	<tr>
+		<td>TA</td>
+		<td class="textc">01 &nbsp; 02 &nbsp;	030</td>
+		<td><input type="number" step="any" name="ta"></td>
+	</tr>
+	<tr>
+		<td>Clothing Allowance</td>
+		<td class="textc">01 &nbsp; 02 &nbsp;	040</td>
+		<td><input type="number" step="any" name="cloth"></td>
+	</tr>
+	<tr>
+		<td>Honoraria</td>
+		<td class="textc">01 &nbsp; 02 &nbsp;	100</td>
+		<td><input type="number" step="any" name="honoraria"></td>
+	</tr>
+	<tr>
+		<td>Year End Bonus</td>
+		<td class="textc">01 &nbsp; 02 &nbsp;	140</td>
+		<td><input type="number" step="any" name="year_end"></td>
+	</tr>
+	<tr>
+		<td>Cash Gift</td>
+		<td class="textc">01 &nbsp; 02 &nbsp;	150</td>
+		<td><input type="number" step="any" name="cash_gift"></td>
+	</tr>
+	<tr>
+		<td>Mid-Year Bonus</td>
+		<td class="textc">01 &nbsp; 02 &nbsp;	990-1</td>
+		<td><input type="number" step="any" name="mid_year"></td>
+	</tr>
+	<tr>
+		<td>PIB</td>
+		<td class="textc">01 &nbsp; 02 &nbsp;	080</td>
+		<td><input type="number" step="any" name="pib"></td>
+	</tr>
+	<tr>
+		<td>Life &amp; Retirement Insurance</td>
+		<td class="textc">01 &nbsp; 03 &nbsp;	010</td>
+		<td><input type="number" step="any" name="gsis"></td>
+	</tr>
+	<tr>
+		<td>Pag-Ibig Contributions</td>
+		<td class="textc">01 &nbsp; 03 &nbsp;	020</td>
+		<td><input type="number" step="any" name="hdmf"></td>
+	</tr>
+	<tr>
+		<td>PHILHEALTH Contributions</td>
+		<td class="textc">01 &nbsp; 03 &nbsp;	030</td>
+		<td><input type="number" step="any" name="care"></td>
+	</tr>
+	<tr>
+		<td>ECC Contributions</td>
+		<td class="textc">01 &nbsp; 03 &nbsp;	040</td>
+		<td><input type="number" step="any" name="ecc"></td>
+	</tr>
+	<tr>
+		<td>Terminal Leave Benefits</td>
+		<td class="textc">&nbsp;</td>
+		<td><input type="number" step="any" name="tlb"></td>
+	</tr>
+	<tr>
+		<td>Other Personel Benefits</td>
+		<td class="textc">&nbsp;</td>
+		<td><input type="number" step="any" name="others"></td>
+	</tr>
+	<tr>
+		<td colspan=3><input type="submit" value="Submit"></td>
+		
+	</tr>
+</table>
+
+</div>
+
+
+
+
+</form>
+	
+<table id="tb2">
+<tr>
+	<th rowspan = 2>DATE</th>
+	<th rowspan = 2>Ref.<br>
+					AO/AA/<br>
+					ALOBS<br>
+							</th>
+	<th rowspan = 2>Claimant</th>
+	<th rowspan = 2>Total Obligation</th>
+	<th colspan = 16>Obligations Incurred</th>
+</tr>
+<tr>
+	<th>01 &nbsp; 01 &nbsp; 010</th>
+	<th>01 &nbsp; 02 &nbsp;	010</th>
+	<th>01 &nbsp; 02 &nbsp;	020 </th>
+	<th>01 &nbsp; 02 &nbsp;	030</th>
+	<th>01 &nbsp; 02 &nbsp;	040</th>
+	<th>01 &nbsp; 02 &nbsp;	100</th>
+	<th>01 &nbsp; 02 &nbsp;	140</th>
+	<th>01 &nbsp; 02 &nbsp;	150</th>
+	<th>01 &nbsp; 02 &nbsp;	990-1</th>
+	<th>01 &nbsp; 02 &nbsp;	080</th>
+	<th>01 &nbsp; 03 &nbsp;	010</th>
+	<th>01 &nbsp; 03 &nbsp;	020</th>
+	<th>01 &nbsp; 03 &nbsp;	030</th>
+	<th>01 &nbsp; 03 &nbsp;	040</th>
+	<th>Terminal Leave Benefits</th>
+	<th>Other Personel Benefits</th>
+</tr>
+<tr>
+	<td>&nbsp;</td>
+	<td>&nbsp;</td>
+	<td>&nbsp;</td>
+	<td>&nbsp;</td>
+	<td>&nbsp;</td>
+	<td>&nbsp;</td>
+	<td>&nbsp;</td>
+	<td>&nbsp;</td>
+	<td>&nbsp;</td>
+	<td>&nbsp;</td>
+	<td>&nbsp;</td>
+	<td>&nbsp;</td>
+	<td>&nbsp;</td>
+	<td>&nbsp;</td>
+	<td>&nbsp;</td>
+	<td>&nbsp;</td>
+	<td>&nbsp;</td>
+	<td>&nbsp;</td>
+	<td>&nbsp;</td>
+	<td>&nbsp;</td>
+	
+</tr>
+	
+<?PHP
+/* JANUARY */
+$yearTransact = $_SESSION['budget'];
+$result = $db->prepare("SELECT year_transact, month_transact, day_transact, alobs, claimant, salaries, PERA, RA, TA, clothing_allowance, honoraria, year_end_bonus, cash_gift, mid_year_bonus, pib, 	life_retirement, pag_ibig, philhealth, ecc, terminal_benefits, other_personel_benefits, total FROM psmmo WHERE year_transact = ? AND month_transact = ? ORDER BY alobs ASC");
+$result->execute([$yearTransact, "01"]);
+ 
+  while ($row = $result->fetch(PDO::FETCH_BOTH)) {
+            echo '<tr>';
+			echo '<td>'.$row['month_transact'].'/'.$row['day_transact'].'/'.$row['year_transact'].'</td>';
+			echo '<td>'.$row['alobs'].'</td>';
+			echo '<td>'.$row['claimant'].'</td>';
+			echo '<td>'.number_format($row['total'],2).'</td>';
+			
+			if($row['salaries']!="0.00"){ echo '<td>'.number_format($row['salaries'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['PERA']!="0.00"){ echo '<td>'.number_format($row['PERA'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['RA']!="0.00"){echo '<td>'.number_format($row['RA'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['TA']!="0.00"){echo '<td>'.number_format($row['TA'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['clothing_allowance']!="0.00"){echo '<td>'.number_format($row['clothing_allowance'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['honoraria']!="0.00"){echo '<td>'.number_format($row['honoraria'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['year_end_bonus']!="0.00"){echo '<td>'.number_format($row['year_end_bonus'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['cash_gift']!="0.00"){echo '<td>'.number_format($row['cash_gift'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['mid_year_bonus']!="0.00"){echo '<td>'.number_format($row['mid_year_bonus'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['pib']!="0.00"){echo '<td>'.number_format($row['pib'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['life_retirement']!="0.00"){echo '<td>'.number_format($row['life_retirement'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['pag_ibig']!="0.00"){echo '<td>'.number_format($row['pag_ibig'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['philhealth']!="0.00"){echo '<td>'.number_format($row['philhealth'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['ecc']!="0.00"){echo '<td>'.number_format($row['ecc'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['terminal_benefits']!="0.00"){echo '<td>'.number_format($row['terminal_benefits'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['other_personel_benefits']!="0.00"){echo '<td>'.number_format($row['other_personel_benefits'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			echo '</tr>';
+		}
+		
+?>
+<tr>
+
+	<td class="tdcolor">&nbsp;</td>
+	<td class="tdcolor">&nbsp;</td>
+	<td class="tdcolor">&nbsp;</td>
+	<td class="tdcolor"><strong><?PHP echo number_format($ps_jan_total,2); ?></strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+</tr>
+
+
+
+<?PHP		
+		
+/* FEBRUARY */			
+	echo '<tr>';
+		
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+	echo '</tr>';
+	
+	
+
+$yearTransact = $_SESSION['budget'];
+$result = $db->prepare("SELECT year_transact, month_transact, day_transact, alobs, claimant, salaries, PERA, RA, TA, clothing_allowance, honoraria, year_end_bonus, cash_gift, mid_year_bonus, pib, 	life_retirement, pag_ibig, philhealth, ecc, terminal_benefits, other_personel_benefits, total FROM psmmo WHERE year_transact = ? AND month_transact = ? ORDER BY alobs ASC");
+$result->execute([$yearTransact, "02"]);
+ 
+  while ($row = $result->fetch(PDO::FETCH_BOTH)) {
+            echo '<tr>';
+			echo '<td>'.$row['month_transact'].'/'.$row['day_transact'].'/'.$row['year_transact'].'</td>';
+			echo '<td>'.$row['alobs'].'</td>';
+			echo '<td>'.$row['claimant'].'</td>';
+			echo '<td>'.number_format($row['total'],2).'</td>';
+			
+			if($row['salaries']!="0.00"){ echo '<td>'.number_format($row['salaries'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['PERA']!="0.00"){ echo '<td>'.number_format($row['PERA'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['RA']!="0.00"){echo '<td>'.number_format($row['RA'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['TA']!="0.00"){echo '<td>'.number_format($row['TA'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['clothing_allowance']!="0.00"){echo '<td>'.number_format($row['clothing_allowance'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['honoraria']!="0.00"){echo '<td>'.number_format($row['honoraria'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['year_end_bonus']!="0.00"){echo '<td>'.number_format($row['year_end_bonus'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['cash_gift']!="0.00"){echo '<td>'.number_format($row['cash_gift'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['mid_year_bonus']!="0.00"){echo '<td>'.number_format($row['mid_year_bonus'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['pib']!="0.00"){echo '<td>'.number_format($row['pib'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['life_retirement']!="0.00"){echo '<td>'.number_format($row['life_retirement'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['pag_ibig']!="0.00"){echo '<td>'.number_format($row['pag_ibig'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['philhealth']!="0.00"){echo '<td>'.number_format($row['philhealth'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['ecc']!="0.00"){echo '<td>'.number_format($row['ecc'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['terminal_benefits']!="0.00"){echo '<td>'.number_format($row['terminal_benefits'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['other_personel_benefits']!="0.00"){echo '<td>'.number_format($row['other_personel_benefits'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			echo '</tr>';
+		}
+
+?>
+
+<tr>
+
+	<td class="tdcolor">&nbsp;</td>
+	<td class="tdcolor">&nbsp;</td>
+	<td class="tdcolor">&nbsp;</td>
+	<td class="tdcolor"><strong><?PHP echo number_format($ps_feb_total,2); ?></strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+</tr>
+
+
+
+
+
+<?PHP
+
+		
+	echo '<tr>';
+		
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+	echo '</tr>';	
+	
+	
+/* MARCH */	
+$yearTransact = $_SESSION['budget'];
+$result = $db->prepare("SELECT year_transact, month_transact, day_transact, alobs, claimant, salaries, PERA, RA, TA, clothing_allowance, honoraria, year_end_bonus, cash_gift, mid_year_bonus, pib, 	life_retirement, pag_ibig, philhealth, ecc, terminal_benefits, other_personel_benefits, total FROM psmmo WHERE year_transact = ? AND month_transact = ? ORDER BY alobs ASC");
+$result->execute([$yearTransact, "03"]);
+ 
+  while ($row = $result->fetch(PDO::FETCH_BOTH)) {
+            echo '<tr>';
+			echo '<td>'.$row['month_transact'].'/'.$row['day_transact'].'/'.$row['year_transact'].'</td>';
+			echo '<td>'.$row['alobs'].'</td>';
+			echo '<td>'.$row['claimant'].'</td>';
+			echo '<td>'.number_format($row['total'],2).'</td>';
+			
+			if($row['salaries']!="0.00"){ echo '<td>'.number_format($row['salaries'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['PERA']!="0.00"){ echo '<td>'.number_format($row['PERA'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['RA']!="0.00"){echo '<td>'.number_format($row['RA'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['TA']!="0.00"){echo '<td>'.number_format($row['TA'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['clothing_allowance']!="0.00"){echo '<td>'.number_format($row['clothing_allowance'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['honoraria']!="0.00"){echo '<td>'.number_format($row['honoraria'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['year_end_bonus']!="0.00"){echo '<td>'.number_format($row['year_end_bonus'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['cash_gift']!="0.00"){echo '<td>'.number_format($row['cash_gift'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['mid_year_bonus']!="0.00"){echo '<td>'.number_format($row['mid_year_bonus'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['pib']!="0.00"){echo '<td>'.number_format($row['pib'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['life_retirement']!="0.00"){echo '<td>'.number_format($row['life_retirement'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['pag_ibig']!="0.00"){echo '<td>'.number_format($row['pag_ibig'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['philhealth']!="0.00"){echo '<td>'.number_format($row['philhealth'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['ecc']!="0.00"){echo '<td>'.number_format($row['ecc'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['terminal_benefits']!="0.00"){echo '<td>'.number_format($row['terminal_benefits'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['other_personel_benefits']!="0.00"){echo '<td>'.number_format($row['other_personel_benefits'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			echo '</tr>';
+		}
+
+?>
+
+<tr>
+
+	<td class="tdcolor">&nbsp;</td>
+	<td class="tdcolor">&nbsp;</td>
+	<td class="tdcolor">&nbsp;</td>
+	<td class="tdcolor"><strong><?PHP echo number_format($ps_march_total,2); ?></strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+</tr>
+
+
+
+
+
+
+<?PHP
+/* APRIL */
+		
+	echo '<tr>';
+		
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+	echo '</tr>';	
+	
+	
+	
+$yearTransact = $_SESSION['budget'];
+$result = $db->prepare("SELECT year_transact, month_transact, day_transact, alobs, claimant, salaries, PERA, RA, TA, clothing_allowance, honoraria, year_end_bonus, cash_gift, mid_year_bonus, pib, 	life_retirement, pag_ibig, philhealth, ecc, terminal_benefits, other_personel_benefits, total FROM psmmo WHERE year_transact = ? AND month_transact = ? ORDER BY alobs ASC");
+$result->execute([$yearTransact, "04"]);
+ 
+  while ($row = $result->fetch(PDO::FETCH_BOTH)) {
+            echo '<tr>';
+			echo '<td>'.$row['month_transact'].'/'.$row['day_transact'].'/'.$row['year_transact'].'</td>';
+			echo '<td>'.$row['alobs'].'</td>';
+			echo '<td>'.$row['claimant'].'</td>';
+			echo '<td>'.number_format($row['total'],2).'</td>';
+			
+			if($row['salaries']!="0.00"){ echo '<td>'.number_format($row['salaries'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['PERA']!="0.00"){ echo '<td>'.number_format($row['PERA'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['RA']!="0.00"){echo '<td>'.number_format($row['RA'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['TA']!="0.00"){echo '<td>'.number_format($row['TA'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['clothing_allowance']!="0.00"){echo '<td>'.number_format($row['clothing_allowance'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['honoraria']!="0.00"){echo '<td>'.number_format($row['honoraria'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['year_end_bonus']!="0.00"){echo '<td>'.number_format($row['year_end_bonus'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['cash_gift']!="0.00"){echo '<td>'.number_format($row['cash_gift'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['mid_year_bonus']!="0.00"){echo '<td>'.number_format($row['mid_year_bonus'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['pib']!="0.00"){echo '<td>'.number_format($row['pib'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['life_retirement']!="0.00"){echo '<td>'.number_format($row['life_retirement'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['pag_ibig']!="0.00"){echo '<td>'.number_format($row['pag_ibig'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['philhealth']!="0.00"){echo '<td>'.number_format($row['philhealth'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['ecc']!="0.00"){echo '<td>'.number_format($row['ecc'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['terminal_benefits']!="0.00"){echo '<td>'.number_format($row['terminal_benefits'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['other_personel_benefits']!="0.00"){echo '<td>'.number_format($row['other_personel_benefits'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			echo '</tr>';
+		}
+
+?>
+
+<tr>
+
+	<td class="tdcolor">&nbsp;</td>
+	<td class="tdcolor">&nbsp;</td>
+	<td class="tdcolor">&nbsp;</td>
+	<td class="tdcolor"><strong><?PHP echo number_format($ps_april_total,2); ?></strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+</tr>
+
+
+<?PHP
+/* MAY */
+		
+	echo '<tr>';
+		
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+	echo '</tr>';	
+	
+	
+	
+$yearTransact = $_SESSION['budget'];
+$result = $db->prepare("SELECT year_transact, month_transact, day_transact, alobs, claimant, salaries, PERA, RA, TA, clothing_allowance, honoraria, year_end_bonus, cash_gift, mid_year_bonus, pib, 	life_retirement, pag_ibig, philhealth, ecc, terminal_benefits, other_personel_benefits, total FROM psmmo WHERE year_transact = ? AND month_transact = ? ORDER BY alobs ASC");
+$result->execute([$yearTransact, "05"]);
+ 
+  while ($row = $result->fetch(PDO::FETCH_BOTH)) {
+            echo '<tr>';
+			echo '<td>'.$row['month_transact'].'/'.$row['day_transact'].'/'.$row['year_transact'].'</td>';
+			echo '<td>'.$row['alobs'].'</td>';
+			echo '<td>'.$row['claimant'].'</td>';
+			echo '<td>'.number_format($row['total'],2).'</td>';
+			
+			if($row['salaries']!="0.00"){ echo '<td>'.number_format($row['salaries'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['PERA']!="0.00"){ echo '<td>'.number_format($row['PERA'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['RA']!="0.00"){echo '<td>'.number_format($row['RA'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['TA']!="0.00"){echo '<td>'.number_format($row['TA'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['clothing_allowance']!="0.00"){echo '<td>'.number_format($row['clothing_allowance'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['honoraria']!="0.00"){echo '<td>'.number_format($row['honoraria'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['year_end_bonus']!="0.00"){echo '<td>'.number_format($row['year_end_bonus'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['cash_gift']!="0.00"){echo '<td>'.number_format($row['cash_gift'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['mid_year_bonus']!="0.00"){echo '<td>'.number_format($row['mid_year_bonus'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['pib']!="0.00"){echo '<td>'.number_format($row['pib'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['life_retirement']!="0.00"){echo '<td>'.number_format($row['life_retirement'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['pag_ibig']!="0.00"){echo '<td>'.number_format($row['pag_ibig'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['philhealth']!="0.00"){echo '<td>'.number_format($row['philhealth'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['ecc']!="0.00"){echo '<td>'.number_format($row['ecc'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['terminal_benefits']!="0.00"){echo '<td>'.number_format($row['terminal_benefits'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['other_personel_benefits']!="0.00"){echo '<td>'.number_format($row['other_personel_benefits'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			echo '</tr>';
+		}
+
+?>
+
+<tr>
+
+	<td class="tdcolor">&nbsp;</td>
+	<td class="tdcolor">&nbsp;</td>
+	<td class="tdcolor">&nbsp;</td>
+	<td class="tdcolor"><strong><?PHP echo number_format($ps_may_total,2); ?></strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+</tr>
+
+
+<?PHP
+/* JUNE */
+		
+	echo '<tr>';
+		
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+	echo '</tr>';	
+	
+	
+	
+$yearTransact = $_SESSION['budget'];
+$result = $db->prepare("SELECT year_transact, month_transact, day_transact, alobs, claimant, salaries, PERA, RA, TA, clothing_allowance, honoraria, year_end_bonus, cash_gift, mid_year_bonus, pib, 	life_retirement, pag_ibig, philhealth, ecc, terminal_benefits, other_personel_benefits, total FROM psmmo WHERE year_transact = ? AND month_transact = ? ORDER BY alobs ASC");
+$result->execute([$yearTransact, "06"]);
+ 
+  while ($row = $result->fetch(PDO::FETCH_BOTH)) {
+            echo '<tr>';
+			echo '<td>'.$row['month_transact'].'/'.$row['day_transact'].'/'.$row['year_transact'].'</td>';
+			echo '<td>'.$row['alobs'].'</td>';
+			echo '<td>'.$row['claimant'].'</td>';
+			echo '<td>'.number_format($row['total'],2).'</td>';
+			
+			if($row['salaries']!="0.00"){ echo '<td>'.number_format($row['salaries'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['PERA']!="0.00"){ echo '<td>'.number_format($row['PERA'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['RA']!="0.00"){echo '<td>'.number_format($row['RA'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['TA']!="0.00"){echo '<td>'.number_format($row['TA'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['clothing_allowance']!="0.00"){echo '<td>'.number_format($row['clothing_allowance'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['honoraria']!="0.00"){echo '<td>'.number_format($row['honoraria'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['year_end_bonus']!="0.00"){echo '<td>'.number_format($row['year_end_bonus'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['cash_gift']!="0.00"){echo '<td>'.number_format($row['cash_gift'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['mid_year_bonus']!="0.00"){echo '<td>'.number_format($row['mid_year_bonus'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['pib']!="0.00"){echo '<td>'.number_format($row['pib'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['life_retirement']!="0.00"){echo '<td>'.number_format($row['life_retirement'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['pag_ibig']!="0.00"){echo '<td>'.number_format($row['pag_ibig'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['philhealth']!="0.00"){echo '<td>'.number_format($row['philhealth'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['ecc']!="0.00"){echo '<td>'.number_format($row['ecc'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['terminal_benefits']!="0.00"){echo '<td>'.number_format($row['terminal_benefits'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['other_personel_benefits']!="0.00"){echo '<td>'.number_format($row['other_personel_benefits'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			echo '</tr>';
+		}
+
+?>
+
+<tr>
+
+	<td class="tdcolor">&nbsp;</td>
+	<td class="tdcolor">&nbsp;</td>
+	<td class="tdcolor">&nbsp;</td>
+	<td class="tdcolor"><strong><?PHP echo number_format($ps_june_total,2); ?></strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+</tr>
+
+
+
+<?PHP
+/* JULY */
+		
+	echo '<tr>';
+		
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+	echo '</tr>';	
+	
+	
+	
+$yearTransact = $_SESSION['budget'];
+$result = $db->prepare("SELECT year_transact, month_transact, day_transact, alobs, claimant, salaries, PERA, RA, TA, clothing_allowance, honoraria, year_end_bonus, cash_gift, mid_year_bonus, pib, 	life_retirement, pag_ibig, philhealth, ecc, terminal_benefits, other_personel_benefits, total FROM psmmo WHERE year_transact = ? AND month_transact = ? ORDER BY alobs ASC");
+$result->execute([$yearTransact, "07"]);
+ 
+  while ($row = $result->fetch(PDO::FETCH_BOTH)) {
+            echo '<tr>';
+			echo '<td>'.$row['month_transact'].'/'.$row['day_transact'].'/'.$row['year_transact'].'</td>';
+			echo '<td>'.$row['alobs'].'</td>';
+			echo '<td>'.$row['claimant'].'</td>';
+			echo '<td>'.number_format($row['total'],2).'</td>';
+			
+			if($row['salaries']!="0.00"){ echo '<td>'.number_format($row['salaries'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['PERA']!="0.00"){ echo '<td>'.number_format($row['PERA'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['RA']!="0.00"){echo '<td>'.number_format($row['RA'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['TA']!="0.00"){echo '<td>'.number_format($row['TA'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['clothing_allowance']!="0.00"){echo '<td>'.number_format($row['clothing_allowance'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['honoraria']!="0.00"){echo '<td>'.number_format($row['honoraria'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['year_end_bonus']!="0.00"){echo '<td>'.number_format($row['year_end_bonus'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['cash_gift']!="0.00"){echo '<td>'.number_format($row['cash_gift'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['mid_year_bonus']!="0.00"){echo '<td>'.number_format($row['mid_year_bonus'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['pib']!="0.00"){echo '<td>'.number_format($row['pib'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['life_retirement']!="0.00"){echo '<td>'.number_format($row['life_retirement'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['pag_ibig']!="0.00"){echo '<td>'.number_format($row['pag_ibig'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['philhealth']!="0.00"){echo '<td>'.number_format($row['philhealth'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['ecc']!="0.00"){echo '<td>'.number_format($row['ecc'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['terminal_benefits']!="0.00"){echo '<td>'.number_format($row['terminal_benefits'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['other_personel_benefits']!="0.00"){echo '<td>'.number_format($row['other_personel_benefits'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			echo '</tr>';
+		}
+
+?>
+
+<tr>
+
+	<td class="tdcolor">&nbsp;</td>
+	<td class="tdcolor">&nbsp;</td>
+	<td class="tdcolor">&nbsp;</td>
+	<td class="tdcolor"><strong><?PHP echo number_format($ps_july_total,2); ?></strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+</tr>
+
+
+<?PHP
+/* AUGUST */
+		
+	echo '<tr>';
+		
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+	echo '</tr>';	
+	
+	
+	
+$yearTransact = $_SESSION['budget'];
+$result = $db->prepare("SELECT year_transact, month_transact, day_transact, alobs, claimant, salaries, PERA, RA, TA, clothing_allowance, honoraria, year_end_bonus, cash_gift, mid_year_bonus, pib, 	life_retirement, pag_ibig, philhealth, ecc, terminal_benefits, other_personel_benefits, total FROM psmmo WHERE year_transact = ? AND month_transact = ? ORDER BY alobs ASC");
+$result->execute([$yearTransact, "08"]);
+ 
+  while ($row = $result->fetch(PDO::FETCH_BOTH)) {
+            echo '<tr>';
+			echo '<td>'.$row['month_transact'].'/'.$row['day_transact'].'/'.$row['year_transact'].'</td>';
+			echo '<td>'.$row['alobs'].'</td>';
+			echo '<td>'.$row['claimant'].'</td>';
+			echo '<td>'.number_format($row['total'],2).'</td>';
+			
+			if($row['salaries']!="0.00"){ echo '<td>'.number_format($row['salaries'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['PERA']!="0.00"){ echo '<td>'.number_format($row['PERA'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['RA']!="0.00"){echo '<td>'.number_format($row['RA'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['TA']!="0.00"){echo '<td>'.number_format($row['TA'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['clothing_allowance']!="0.00"){echo '<td>'.number_format($row['clothing_allowance'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['honoraria']!="0.00"){echo '<td>'.number_format($row['honoraria'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['year_end_bonus']!="0.00"){echo '<td>'.number_format($row['year_end_bonus'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['cash_gift']!="0.00"){echo '<td>'.number_format($row['cash_gift'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['mid_year_bonus']!="0.00"){echo '<td>'.number_format($row['mid_year_bonus'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['pib']!="0.00"){echo '<td>'.number_format($row['pib'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['life_retirement']!="0.00"){echo '<td>'.number_format($row['life_retirement'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['pag_ibig']!="0.00"){echo '<td>'.number_format($row['pag_ibig'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['philhealth']!="0.00"){echo '<td>'.number_format($row['philhealth'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['ecc']!="0.00"){echo '<td>'.number_format($row['ecc'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['terminal_benefits']!="0.00"){echo '<td>'.number_format($row['terminal_benefits'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['other_personel_benefits']!="0.00"){echo '<td>'.number_format($row['other_personel_benefits'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			echo '</tr>';
+		}
+
+?>
+
+<tr>
+
+	<td class="tdcolor">&nbsp;</td>
+	<td class="tdcolor">&nbsp;</td>
+	<td class="tdcolor">&nbsp;</td>
+	<td class="tdcolor"><strong><?PHP echo number_format($ps_august_total,2); ?></strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+</tr>
+
+
+
+<?PHP
+/* SEPTEMBER */
+		
+	echo '<tr>';
+		
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+	echo '</tr>';	
+	
+	
+	
+$yearTransact = $_SESSION['budget'];
+$result = $db->prepare("SELECT year_transact, month_transact, day_transact, alobs, claimant, salaries, PERA, RA, TA, clothing_allowance, honoraria, year_end_bonus, cash_gift, mid_year_bonus, pib, 	life_retirement, pag_ibig, philhealth, ecc, terminal_benefits, other_personel_benefits, total FROM psmmo WHERE year_transact = ? AND month_transact = ? ORDER BY alobs ASC");
+$result->execute([$yearTransact, "09"]);
+ 
+  while ($row = $result->fetch(PDO::FETCH_BOTH)) {
+            echo '<tr>';
+			echo '<td>'.$row['month_transact'].'/'.$row['day_transact'].'/'.$row['year_transact'].'</td>';
+			echo '<td>'.$row['alobs'].'</td>';
+			echo '<td>'.$row['claimant'].'</td>';
+			echo '<td>'.number_format($row['total'],2).'</td>';
+			
+			if($row['salaries']!="0.00"){ echo '<td>'.number_format($row['salaries'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['PERA']!="0.00"){ echo '<td>'.number_format($row['PERA'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['RA']!="0.00"){echo '<td>'.number_format($row['RA'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['TA']!="0.00"){echo '<td>'.number_format($row['TA'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['clothing_allowance']!="0.00"){echo '<td>'.number_format($row['clothing_allowance'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['honoraria']!="0.00"){echo '<td>'.number_format($row['honoraria'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['year_end_bonus']!="0.00"){echo '<td>'.number_format($row['year_end_bonus'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['cash_gift']!="0.00"){echo '<td>'.number_format($row['cash_gift'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['mid_year_bonus']!="0.00"){echo '<td>'.number_format($row['mid_year_bonus'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['pib']!="0.00"){echo '<td>'.number_format($row['pib'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['life_retirement']!="0.00"){echo '<td>'.number_format($row['life_retirement'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['pag_ibig']!="0.00"){echo '<td>'.number_format($row['pag_ibig'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['philhealth']!="0.00"){echo '<td>'.number_format($row['philhealth'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['ecc']!="0.00"){echo '<td>'.number_format($row['ecc'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['terminal_benefits']!="0.00"){echo '<td>'.number_format($row['terminal_benefits'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['other_personel_benefits']!="0.00"){echo '<td>'.number_format($row['other_personel_benefits'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			echo '</tr>';
+		}
+
+?>
+
+<tr>
+
+	<td class="tdcolor">&nbsp;</td>
+	<td class="tdcolor">&nbsp;</td>
+	<td class="tdcolor">&nbsp;</td>
+	<td class="tdcolor"><strong><?PHP echo number_format($ps_september_total,2); ?></strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+</tr>
+
+
+<?PHP
+/* OCTOBER */
+		
+	echo '<tr>';
+		
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+	echo '</tr>';	
+	
+	
+	
+$yearTransact = $_SESSION['budget'];
+$result = $db->prepare("SELECT year_transact, month_transact, day_transact, alobs, claimant, salaries, PERA, RA, TA, clothing_allowance, honoraria, year_end_bonus, cash_gift, mid_year_bonus, pib, 	life_retirement, pag_ibig, philhealth, ecc, terminal_benefits, other_personel_benefits, total FROM psmmo WHERE year_transact = ? AND month_transact = ? ORDER BY alobs ASC");
+$result->execute([$yearTransact, "10"]);
+ 
+  while ($row = $result->fetch(PDO::FETCH_BOTH)) {
+            echo '<tr>';
+			echo '<td>'.$row['month_transact'].'/'.$row['day_transact'].'/'.$row['year_transact'].'</td>';
+			echo '<td>'.$row['alobs'].'</td>';
+			echo '<td>'.$row['claimant'].'</td>';
+			echo '<td>'.number_format($row['total'],2).'</td>';
+			
+			if($row['salaries']!="0.00"){ echo '<td>'.number_format($row['salaries'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['PERA']!="0.00"){ echo '<td>'.number_format($row['PERA'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['RA']!="0.00"){echo '<td>'.number_format($row['RA'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['TA']!="0.00"){echo '<td>'.number_format($row['TA'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['clothing_allowance']!="0.00"){echo '<td>'.number_format($row['clothing_allowance'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['honoraria']!="0.00"){echo '<td>'.number_format($row['honoraria'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['year_end_bonus']!="0.00"){echo '<td>'.number_format($row['year_end_bonus'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['cash_gift']!="0.00"){echo '<td>'.number_format($row['cash_gift'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['mid_year_bonus']!="0.00"){echo '<td>'.number_format($row['mid_year_bonus'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['pib']!="0.00"){echo '<td>'.number_format($row['pib'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['life_retirement']!="0.00"){echo '<td>'.number_format($row['life_retirement'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['pag_ibig']!="0.00"){echo '<td>'.number_format($row['pag_ibig'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['philhealth']!="0.00"){echo '<td>'.number_format($row['philhealth'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['ecc']!="0.00"){echo '<td>'.number_format($row['ecc'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['terminal_benefits']!="0.00"){echo '<td>'.number_format($row['terminal_benefits'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['other_personel_benefits']!="0.00"){echo '<td>'.number_format($row['other_personel_benefits'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			echo '</tr>';
+		}
+
+?>
+
+<tr>
+
+	<td class="tdcolor">&nbsp;</td>
+	<td class="tdcolor">&nbsp;</td>
+	<td class="tdcolor">&nbsp;</td>
+	<td class="tdcolor"><strong><?PHP echo number_format($ps_october_total,2); ?></strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+</tr>
+
+
+<?PHP
+/* NOVEMBER */
+		
+	echo '<tr>';
+		
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+	echo '</tr>';	
+	
+	
+	
+$yearTransact = $_SESSION['budget'];
+$result = $db->prepare("SELECT year_transact, month_transact, day_transact, alobs, claimant, salaries, PERA, RA, TA, clothing_allowance, honoraria, year_end_bonus, cash_gift, mid_year_bonus, pib, 	life_retirement, pag_ibig, philhealth, ecc, terminal_benefits, other_personel_benefits, total FROM psmmo WHERE year_transact = ? AND month_transact = ? ORDER BY alobs ASC");
+$result->execute([$yearTransact, "11"]);
+ 
+  while ($row = $result->fetch(PDO::FETCH_BOTH)) {
+            echo '<tr>';
+			echo '<td>'.$row['month_transact'].'/'.$row['day_transact'].'/'.$row['year_transact'].'</td>';
+			echo '<td>'.$row['alobs'].'</td>';
+			echo '<td>'.$row['claimant'].'</td>';
+			echo '<td>'.number_format($row['total'],2).'</td>';
+			
+			if($row['salaries']!="0.00"){ echo '<td>'.number_format($row['salaries'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['PERA']!="0.00"){ echo '<td>'.number_format($row['PERA'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['RA']!="0.00"){echo '<td>'.number_format($row['RA'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['TA']!="0.00"){echo '<td>'.number_format($row['TA'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['clothing_allowance']!="0.00"){echo '<td>'.number_format($row['clothing_allowance'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['honoraria']!="0.00"){echo '<td>'.number_format($row['honoraria'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['year_end_bonus']!="0.00"){echo '<td>'.number_format($row['year_end_bonus'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['cash_gift']!="0.00"){echo '<td>'.number_format($row['cash_gift'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['mid_year_bonus']!="0.00"){echo '<td>'.number_format($row['mid_year_bonus'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['pib']!="0.00"){echo '<td>'.number_format($row['pib'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['life_retirement']!="0.00"){echo '<td>'.number_format($row['life_retirement'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['pag_ibig']!="0.00"){echo '<td>'.number_format($row['pag_ibig'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['philhealth']!="0.00"){echo '<td>'.number_format($row['philhealth'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['ecc']!="0.00"){echo '<td>'.number_format($row['ecc'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['terminal_benefits']!="0.00"){echo '<td>'.number_format($row['terminal_benefits'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['other_personel_benefits']!="0.00"){echo '<td>'.number_format($row['other_personel_benefits'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			echo '</tr>';
+		}
+
+?>
+
+<tr>
+
+	<td class="tdcolor">&nbsp;</td>
+	<td class="tdcolor">&nbsp;</td>
+	<td class="tdcolor">&nbsp;</td>
+	<td class="tdcolor"><strong><?PHP echo number_format($ps_november_total,2); ?></strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+</tr>
+
+<?PHP
+/* DECEMBER */
+		
+	echo '<tr>';
+		
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+	echo '</tr>';	
+	
+	
+	
+$yearTransact = $_SESSION['budget'];
+$result = $db->prepare("SELECT year_transact, month_transact, day_transact, alobs, claimant, salaries, PERA, RA, TA, clothing_allowance, honoraria, year_end_bonus, cash_gift, mid_year_bonus, pib, 	life_retirement, pag_ibig, philhealth, ecc, terminal_benefits, other_personel_benefits, total FROM psmmo WHERE year_transact = ? AND month_transact = ? ORDER BY alobs ASC");
+$result->execute([$yearTransact, "12"]);
+ 
+  while ($row = $result->fetch(PDO::FETCH_BOTH)) {
+            echo '<tr>';
+			echo '<td>'.$row['month_transact'].'/'.$row['day_transact'].'/'.$row['year_transact'].'</td>';
+			echo '<td>'.$row['alobs'].'</td>';
+			echo '<td>'.$row['claimant'].'</td>';
+			echo '<td>'.number_format($row['total'],2).'</td>';
+			
+			if($row['salaries']!="0.00"){ echo '<td>'.number_format($row['salaries'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['PERA']!="0.00"){ echo '<td>'.number_format($row['PERA'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['RA']!="0.00"){echo '<td>'.number_format($row['RA'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['TA']!="0.00"){echo '<td>'.number_format($row['TA'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['clothing_allowance']!="0.00"){echo '<td>'.number_format($row['clothing_allowance'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['honoraria']!="0.00"){echo '<td>'.number_format($row['honoraria'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['year_end_bonus']!="0.00"){echo '<td>'.number_format($row['year_end_bonus'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['cash_gift']!="0.00"){echo '<td>'.number_format($row['cash_gift'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['mid_year_bonus']!="0.00"){echo '<td>'.number_format($row['mid_year_bonus'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['pib']!="0.00"){echo '<td>'.number_format($row['pib'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['life_retirement']!="0.00"){echo '<td>'.number_format($row['life_retirement'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['pag_ibig']!="0.00"){echo '<td>'.number_format($row['pag_ibig'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['philhealth']!="0.00"){echo '<td>'.number_format($row['philhealth'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['ecc']!="0.00"){echo '<td>'.number_format($row['ecc'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['terminal_benefits']!="0.00"){echo '<td>'.number_format($row['terminal_benefits'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			if($row['other_personel_benefits']!="0.00"){echo '<td>'.number_format($row['other_personel_benefits'],2).'</td>';} else echo '<td>&nbsp;</td>';
+			echo '</tr>';
+		}
+
+?>
+
+<tr>
+
+	<td class="tdcolor">&nbsp;</td>
+	<td class="tdcolor">&nbsp;</td>
+	<td class="tdcolor">&nbsp;</td>
+	<td class="tdcolor"><strong><?PHP echo number_format($ps_december_total,2); ?></strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+	<td class="tdcolor"><strong>&nbsp;</strong></td>
+</tr>
+
+
+
+
+<?PHP
+/*-----------------------------------------*/
+		
+	echo '<tr>';
+		
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+	echo '</tr>';	
+	
+	
+	
+
+
+
+	
+		echo '<tr class="border-bottom">';
+		echo '<td>&nbsp;</td>';
+		echo '<td>&nbsp;</td>';
+		echo '<td>Grand TOTAL:</td>';
+		echo '<td><strong>'.number_format(get_total_obligation(),2).'</strong></td>';
+		echo '<td><strong>'.number_format(get_total_salaries(),2).'</strong></td>';
+		echo '<td><strong>'.number_format(get_total_pera(),2).'</strong></td>';
+		echo '<td><strong>'.number_format(get_total_ra(),2).'</strong></td>';
+		echo '<td><strong>'.number_format(get_total_ta(),2).'</strong></td>';
+		echo '<td><strong>'.number_format(get_total_cloth(),2).'</strong></td>';
+		echo '<td><strong>'.number_format(get_total_hon(),2).'</strong></td>';
+		echo '<td><strong>'.number_format(get_total_yearend(),2).'</strong></td>';
+		echo '<td><strong>'.number_format(get_total_cashgft(),2).'</strong></td>';
+		echo '<td><strong>'.number_format(get_total_mid_year(),2).'</strong></td>';
+		echo '<td><strong>'.number_format(get_total_pib(),2).'</strong></td>';
+		echo '<td><strong>'.number_format(get_total_gsis(),2).'</strong></td>';
+		echo '<td><strong>'.number_format(get_total_hdmf(),2).'</strong></td>';
+		echo '<td><strong>'.number_format(get_total_care(),2).'</strong></td>';
+		echo '<td><strong>'.number_format(get_total_ecc(),2).'</strong></td>';
+		echo '<td><strong>'.number_format(get_total_tlb(),2).'</strong></td>';
+		echo '<td><strong>'.number_format(get_total_others(),2).'</strong></td>';
+		echo '</tr>';
+
+		
+		
+		echo '<tr >';
+		echo '<td>&nbsp;</td>';
+		echo '<td>&nbsp;</td>';
+		echo '<td>Grand Total Balance:</td>';
+		echo '<td>'.number_format(get_obligation_bal(),2).'</td>';
+		echo '<td>'.number_format(get_salaries_bal(),2).'</td>';
+		echo '<td>'.number_format(get_pera_bal(),2).'</td>';
+		echo '<td>'.number_format(get_ra_bal(),2).'</td>';
+		echo '<td>'.number_format(get_ta_bal(),2).'</td>';
+		echo '<td>'.number_format(get_cloth_bal(),2).'</td>';
+		echo '<td>'.number_format(get_hon_bal(),2).'</td>';
+		echo '<td>'.number_format(get_yearend_bal(),2).'</td>';
+		echo '<td>'.number_format(get_cashgft_bal(),2).'</td>';
+		echo '<td>'.number_format(get_mid_year_bal(),2).'</td>';
+		echo '<td>'.number_format(get_pib_bal(),2).'</td>';
+		echo '<td>'.number_format(get_gsis_bal(),2).'</td>';
+		echo '<td>'.number_format(get_hdmf_bal(),2).'</td>';
+		echo '<td>'.number_format(get_care_bal(),2).'</td>';
+		echo '<td>'.number_format(get_ecc_bal(),2).'</td>';
+		echo '<td>'.number_format(get_tlb_bal(),2).'</td>';
+		echo '<td>'.number_format(get_others_bal(),2).'</td>';
+		echo '</tr>';
+
+		echo '<tr>';
+			echo '<td>&nbsp;</td>';
+			echo '<td>&nbsp;</td>';
+			echo '<td class="tdclass"><STRONG>Allotment:</STRONG></td>';
+			echo '<td class="tdclass">'.number_format(get_appropriation(),2).'</td>';
+			echo '<td class="tdclass"><STRONG>'.number_format(get_aip_salaries(),2).'</STRONG></td>';
+			echo '<td class="tdclass"><STRONG>'.number_format(get_aip_pera(),2).'</STRONG></td>';
+			echo '<td class="tdclass"><STRONG>'.number_format(get_aip_ra(),2).'</STRONG></td>';
+			echo '<td class="tdclass"><STRONG>'.number_format(get_aip_ta(),2).'</STRONG></td>';
+			echo '<td class="tdclass"><STRONG>'.number_format(get_aip_cloth(),2).'</STRONG></td>';
+			echo '<td class="tdclass"><STRONG>'.number_format(get_aip_hon(),2).'</STRONG></td>';
+			echo '<td class="tdclass"><STRONG>'.number_format(get_aip_yend(),2).'</STRONG></td>';
+			echo '<td class="tdclass"><STRONG>'.number_format(get_aip_cash(),2).'</STRONG></td>';
+			echo '<td class="tdclass"><STRONG>'.number_format(get_aip_mid(),2).'</STRONG></td>';
+			echo '<td class="tdclass"><STRONG>'.number_format(get_aip_pib(),2).'</STRONG></td>';
+			echo '<td class="tdclass"><STRONG>'.number_format(get_aip_gsis(),2).'</STRONG></td>';
+			echo '<td class="tdclass"><STRONG>'.number_format(get_aip_hdmf(),2).'</STRONG></td>';
+			echo '<td class="tdclass"><STRONG>'.number_format(get_aip_ph(),2).'</STRONG></td>';
+			echo '<td class="tdclass"><STRONG>'.number_format(get_aip_ecc(),2).'</STRONG></td>';
+			echo '<td class="tdclass"><STRONG>'.number_format(get_aip_tlb(),2).'</STRONG></td>';
+			echo '<td class="tdclass"><STRONG>'.number_format(get_aip_other(),2).'</STRONG></td>';
+		echo '</tr>';
+
+	
+ ?>
+ 
+ 
+
+	
+	
+
+</tr>
+</table>
+</body>
+</html>
+
+
+
+

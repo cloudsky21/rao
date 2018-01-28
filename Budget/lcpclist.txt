@@ -1,0 +1,50 @@
+Enhanced Gulayan sa Paaralan
+engulayan 
+	
+Teenage Pregnancy Awareness / Prevention
+teenpreg 
+	
+Database for Children
+dbaseforchildren 
+
+Enforcement of Pedestrian Lanes
+pedslane 
+	
+Dristribution of First Aid and Health Kits
+distfaid 
+	
+Drug Awareness and Reduction
+drugawareness 
+	
+Procurement of Sports Equipment
+sportsequip 
+	
+LCPC Office Supplies
+lcpcOsupplies 
+	
+
+LCPC regular meetings/trainings
+lcpcregmeet 
+	
+
+Proper Waste Disposal
+propwastedisp  
+	
+Day Care Instructional Materials
+daycare 
+	
+Advocacy Children's Law
+childrenslaw 
+
+Day Care Worker's Day
+daycareworkersday  
+	
+Day Care Workker Trainings
+daycareworkerstraining  
+
+
+Financial Assistance to CICL
+fassistcicl  
+	
+Assist the PB in conducting diversion proceedings
+pbdiversions

@@ -1,0 +1,41 @@
+Aid to Barangays
+aid_barangay
+
+Death Indemnity
+death_indemnity
+
+Financial Assistance for Implementation of Katarungan Pambarangay
+fa_Kbrgy
+
+Surveillance of AIDS
+aids
+
+Loyalty Award for LGU Employees (Ring)
+loyalty_award
+
+Civil Service Month Celebration
+csmonth_celeb
+
+Purchase of Medicines
+p_meds
+
+Philhealth Contributions for Indigent Families
+philhealth
+
+Common HealthFund (Annual Contribution to ILHZ)
+healthfund
+
+MASAMASID
+masamasid
+
+Legal Services
+legal_services
+
+Maintenance of Municipal/Barangay Road
+brgy_road
+
+Maintenance of Municipal Building
+mun_bldg
+
+Municipal Vehicle Maintenance
+mun_vehicle

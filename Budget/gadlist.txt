@@ -1,0 +1,32 @@
+gadOffice_m
+Equipping/supplies/maintaining GAD office
+
+iec_mtrls
+Symposium/Production of IEC Materials
+
+bida_cpBldg
+Capacity Building, Seminars/Trainings to service providers (BIDA)
+
+cLrNcD
+Chronic Lifestyle related Non-Communicable Disease
+
+p_bloodstrips
+Purchase of Blood Sugar Testing Strips
+
+hCcongress
+Annual Health Club Congress
+
+bloodService
+Intensify Advocacy on RA 7719 (Nat'l Blood Service Act)
+
+cancer_p
+Cancer Prevention Program
+
+cervical_cs
+Conduct Free Cervical Cancer Screening
+
+wfs_asrh
+Implementation of WFS ASRH Program
+
+capacity_CHV
+Capacity Building for CHV

@@ -1,0 +1,87 @@
+MDC Operation
+mdcOperation
+
+Municipal Volunteer Program
+mvprogram
+
+Barangayan/Gui-os Barangay
+barangayan
+
+Financial Assistance for Brgy. priority P/P/As-CCA/DRR
+faBrgyP
+
+CBMS
+cbms
+
+Counterpart Fund for LPRAP P/P/As
+cfLPRAP
+
+Development Planning - SusDev/CLUP enhancement
+susDevCLUP
+
+Development of ICT & Tech4Ed Operation
+ictTech4ed
+
+Research and Development
+rAndD
+
+IEC-Information, Education Campaign
+iecEdCamp
+
+Development of Municipal Cemetery -phase 1
+dCem
+
+Urban Development -Expansion of Urban/Growth Center
+udExUgc
+
+Maintenance of Mun./Brgy. Roads
+mBrgyRoads
+
+Sports Development
+SportsDev
+
+Agri/Fisheries Development & Livelihood Projects
+afdLproj
+
+Agri Extension Program (Cap Bldg)
+aExtPCapB
+
+Animal Health Care Management
+AHCM
+
+Coastal Fishery Resources Mgt. Program
+coastalFRM
+
+Local Poverty Reduction Program
+LpovRp
+
+Solid Waste Mgt. Management Program
+wasteMgt
+
+Clean & Green Program
+cleanGreen
+
+Infrastructure Development for Barangays
+infraBrgys
+
+Loan Payment
+loanPayment
+
+MASAMASID
+masamasid
+
+Tourism / Cultural Activities
+tourCultAct
+
+Tourism Project/s - Infrastructure development
+tourProjinfraDev
+
+
+
+
+
+
+
+
+
+

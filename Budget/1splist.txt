@@ -1,0 +1,61 @@
+Honorarium for PWD and Focal Person
+honorarium
+
+Mandatory Program NDPR Celebration
+npdr
+
+Maintenance of Motor Vehicle
+motor_vehicle_maint
+
+Production of PWD IDs and Registration
+idsregistration
+
+Skills & Training Livelihood
+skillstraining
+
+Training allowance/Conduct Monthly meeting & Quarterly Meeting with Focal Person
+trainingallowance
+
+Medical/Financial Assistance for All PWD Members
+fassist
+
+DRR Training, Life Saving Support (drill & simulation)
+drrtraining
+
+Year-end Assessment
+yearendasses
+
+
+Continuing Education for Older Persons & Older Person Empowerment Activities (TEV)
+tev
+
+Documentation of Older Person & Related Events
+documentation
+
+Elderly Filipino Week Celebration
+filipinoweek
+
+Older Person Camaraderie, Wellness and Healthy Aging Activities
+healthyactivities
+
+Physical Fitness Periodic Exercise
+periodicexercise
+
+Exchange visit to other LGUs-SCOs
+visitslgus
+
+Organizational Effectiveness
+orgeffectiviness
+
+Functional & Decent Office Maintenance
+office_maint
+
+Mid Year Oplan Evaluation
+oplan_eval
+
+Year End Performance Review and Analysis
+yearendperformance
+
+Maintenance of Older Person's Help Desk Office
+ophelpdesks
+
